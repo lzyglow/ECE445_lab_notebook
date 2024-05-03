@@ -17,54 +17,19 @@ ________________________________________________________________________________
 
 It seems like nicki changed her mind to use WIFI module to communicate from esp32-CAM to user phone, but I can still use Bluetooth BLE for two chip communication. Bluetooth BLE should save more energy for communication comparing to WIFI communication between two phones.
 I finish the coding of the server by adjusting the example from the ESP32C3 Dev Module's ESP32 BLE adruino library. I researched some online tutorial and only adjust the main loop of the library besides using a UUID from a UUID generator.
-void loop() {
-    if (deviceConnected) {
-      //trigger = digitalRead(GPIO5);
-      //if (trigger == false) {
-        //pCharacteristic->setValue((uint8_t*)&value, 1);
-        //pCharacteristic->notify();
-        //delay(1000); 
-      //}
-      pCharacteristic->setValue((uint8_t*)&value, 1);
-      pCharacteristic->notify();
-      value++;
-      delay(1000);
-    }
-    // disconnecting
-    if (!deviceConnected && oldDeviceConnected) {
-        delay(500); // give the bluetooth stack the chance to get things ready
-        pServer->startAdvertising(); // restart advertising
-        Serial.println("start advertising");
-        oldDeviceConnected = deviceConnected;
-    }
-    // connecting
-    if (deviceConnected && !oldDeviceConnected) {
-        // do stuff here on connecting
-        oldDeviceConnected = deviceConnected;
-    }
-}
+
+![notify](notify.jpg)
+
 I used a app called nRF Connect to that can connect to esp32 bluetooth to receive the value of characteristic it sents once connected. I tested that the server can successfully send values now, after programming the code to esp32S3.
 
-![rnf](rnf.jpg)
+![rnf](nrf.jpg)
 __________________________________________________________________________________________________________________________________________________________________________________________________
 **4/2/2024 Bluetooth communication client**
 
 I finished the coding of the client, or the esp32-CAM. I mainly adjust its callback function so that the value received can be shown on the seial monitor.
 
-static void notifyCallback(
-  BLERemoteCharacteristic* pBLERemoteCharacteristic,
-  uint8_t* pData,
-  size_t length,
-  bool isNotify) {
-    Serial.print("Notify callback for characteristic ");
-    Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
-    Serial.print(" of data length ");
-    Serial.println(length);
-    uint32_t value = (pData[3] << 24) | (pData[2] << 16) | (pData[1] << 8) | (pData[0]);
-    //Serial.print(pData);
-    Serial.print("data: ");
-    Serial.println(value);
-}
+![callback](callback.png)
+
 The value got was originally shown as a char, and I transfer it into an int, easier to verify.
 
 The problem now was I faced some bug that the value got wasn't as expected: we expected value 1 sent by server if chain is cut, and 0 if not, but now the value kind of piles up.
