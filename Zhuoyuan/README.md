@@ -36,13 +36,91 @@ The problem now was I faced some bug that the value got wasn't as expected: we e
 Also, I am thinking of passing value's value to a global variable to be used in the main loop, so that we can use that variable as an indicator of whether the chain is cut in client.
 
 __________________________________________________________________________________________________________________________________________________________________________________________________
-**4/4/2024 Bluetooth communication client**
+**4/4/2024 Bluetooth communication client continue**
 
 I realized the value in characteristic sent by the client in main loop is value++, which is improper, so I changed it to stay in 1 when chain.cut is detected, and 0 otherwise. The client main loop can now utilize the value sent from the server and stored in variable name 'main_loop_value'.
 
 Nicki has finished the code of the buzzer and the camera. I will work to integrate our code together now.
 
 __________________________________________________________________________________________________________________________________________________________________________________________________
-**4/4/2024 Bluetooth communication client**
+**4/7/2024 server intrgrated code**
 
+Nicki has done the buzzer's code for the alarm subsystem in our design, so I integrate our code together successfully after testing and some debugging. The alarm now will trigger under two circumstances: when the wire is cut, and when the bluetooth is connected. Meanwhile, the server will stil send value to the client. 
+
+![notify_2]notify2.png
+
+I also tried to integrate the code of BLE client with the WIFI camera code Nicki wrote. Althought the pictures are taken, since we could see led flashlight on the camera module, there are some bugs that the connection to the user phone always shows unsuccessful, meaning the pictures are taken but not able to be sent to user phone. Nicki's code alone works fine in terms of sending pictures to user phone. We believe it might be a problem with her WIFI library's version, since she used 1.014 version of esp32 board from her tutorial and ,in the comment below, someone said the code in tutorial weren't working for latest esp32 board version. She is considering changing her tutorial to a later version of esp 32 board.
+
+__________________________________________________________________________________________________________________________________________________________________________________________________
+**4/10/2024 server intrgrated code**
+
+Nicki changed her code to latest version of esp32 board, but the esp32-CAM are still not capable of sending the pictures. We realized after researches that the esp32-CAM only has 1 antenna, meaning if it's receiving bluetooth signal, it cannot send signal to user phone via WIFI.
+
+I am thinking of how to disconnect the client from the server after client received signal indicating the wire is cut.
+I searched online and found a way to deinitialzed the bluetooth for the client.
+
+void loop() {
+
+  //  Now we connect to it.  Once we are 
+  // connected we set the connected flag to be true.
+  if (doConnect == true) {
+    if (connectToServer()) {
+      Serial.println("We are now connected to the BLE Server.");
+    } else {
+      Serial.println("We have failed to connect to the server; there is nothin more we will do.");
+    }
+  //If the flag "doConnect" is true then we have scanned for and found the desired
+  // BLE Server with which we wish to connect. 
+    doConnect = false;
+  }
+
+  // If we are connected to a peer BLE Server, update the characteristic each time we are reached
+  // with the current time since boot.
+  if (connected) {
+    String newValue = "Time since boot: " + String(millis()/1000);
+    Serial.println("Setting new characteristic value to \"" + newValue + "\"");
+    
+    // Set the characteristic's value to be the array of bytes that is actually a string.
+    pRemoteCharacteristic->writeValue(newValue.c_str(), newValue.length());
+    //std::string value = pRemoteCharacteristic->readValue();
+    //uint32_t received_value = (value[3] << 24) | (value[2] << 16) | (value[1] << 8) | (value[0]);
+    Serial.print("The main_loop_value was: ");
+    Serial.println(main_loop_value);
+    
+    if(main_loop_value == 1){
+      sendPhoto = main_loop_value;
+      BLEDevice::deinit();
+      main_loop_value = 0;
+    }
+    
+  }else if(doScan){
+    //BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+    sendPhoto = false;
+  }
+
+
+
+  Serial.println(sendPhoto);
+  if (sendPhoto) {
+    Serial.println("Preparing photo");
+    sendPhotoTelegram(); 
+    delay(2000);
+    sendPhotoTelegram();
+    sendPhoto = false; 
+  }
+  if (millis() > lastTimeBotRan + botRequestDelay)  {
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    if (forceBoot == 1){
+      forceBoot = 0;
+      ESP.restart();
+    }
+    while (numNewMessages) {
+          Serial.println("got response");
+          handleNewMessages(numNewMessages);
+          numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+    lastTimeBotRan = millis();
+  }
+  delay(1000); // Delay a second between loops.
+} // End of loop
 
