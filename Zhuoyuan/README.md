@@ -3,6 +3,8 @@
 
 ______________________________________________________________________________________________________________________________________________________________________________________________________
 **3/14/2024 Workload distribution**
+
+
 In order to alert the bike user swiftly and provide important information about the thief, the proposed solution is a cable bike lock that detects when the cable is cut. A current will be passed through the cable and an open circuit will be detected by the microcontroller if the cable is cut. When the cable is cut, our cameras positioned on the cable and bike will record images that may potentially identify the criminal. The microcontroller will also send out a signal to trigger an alarm, as well as relay all this information to the user via bluetooth connection. The entire system serves to provide multiple layers of safeguards for the user’s bike. First, it deters theft attempts. Second, it alerts the public to a crime. Third, it captures evidence that can enable bike recovery. Here's the visual aid from proposal with the block diagrams:
 
 
