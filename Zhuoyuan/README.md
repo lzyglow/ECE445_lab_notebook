@@ -47,7 +47,7 @@ ________________________________________________________________________________
 
 Nicki has done the buzzer's code for the alarm subsystem in our design, so I integrate our code together successfully after testing and some debugging. The alarm now will trigger under two circumstances: when the wire is cut, and when the bluetooth is connected. Meanwhile, the server will stil send value to the client. 
 
-![notify_2]notify2.png
+![notify_2](notify2.png)
 
 I also tried to integrate the code of BLE client with the WIFI camera code Nicki wrote. Althought the pictures are taken, since we could see led flashlight on the camera module, there are some bugs that the connection to the user phone always shows unsuccessful, meaning the pictures are taken but not able to be sent to user phone. Nicki's code alone works fine in terms of sending pictures to user phone. We believe it might be a problem with her WIFI library's version, since she used 1.014 version of esp32 board from her tutorial and ,in the comment below, someone said the code in tutorial weren't working for latest esp32 board version. She is considering changing her tutorial to a later version of esp 32 board.
 
@@ -246,3 +246,4 @@ The code is working, the pcb is done and functioning after Jonathan and Nicki di
 Jonathan had done a battery test with our esp32S3, which requires 3.3V operational voltage, but he didn't do the battery test for our camera module.
 I just placed a new battery into the camera module, record its battery voltage supply every hour, and after 3 hours, I recorded the voltage of the battery for each hour to make a plot, and calculated the average voltage drop of the battery for esp32-CAM is 1.57, which is much larger than we expected.
 
+![voltage that battery supply over time](voltage.png)
