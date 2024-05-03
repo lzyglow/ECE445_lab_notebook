@@ -18,9 +18,9 @@ ________________________________________________________________________________
 It seems like nicki changed her mind to use WIFI module to communicate from esp32-CAM to user phone, but I can still use Bluetooth BLE for two chip communication. Bluetooth BLE should save more energy for communication comparing to WIFI communication between two phones.
 I finish the coding of the server by adjusting the example from the ESP32C3 Dev Module's ESP32 BLE adruino library. I researched some online tutorial and only adjust the main loop of the library besides using a UUID from a UUID generator.
 
-![notify](notify.jpg)
+![notify](notify.png)
 
-I used a app called nRF Connect to that can connect to esp32 bluetooth to receive the value of characteristic it sents once connected. I tested that the server can successfully send values now, after programming the code to esp32S3.
+I used a app called nRF Connect to that can connect to esp32 bluetooth to receive the value of characteristic it sents once connected. I tested that the server can successfully send values now, after programming the code to esp32S3. We use a esp32 dev board to test the code since our pcb design aren't shipped and finished.
 
 ![rnf](nrf.jpg)
 __________________________________________________________________________________________________________________________________________________________________________________________________
@@ -32,11 +32,17 @@ I finished the coding of the client, or the esp32-CAM. I mainly adjust its callb
 
 The value got was originally shown as a char, and I transfer it into an int, easier to verify.
 
-The problem now was I faced some bug that the value got wasn't as expected: we expected value 1 sent by server if chain is cut, and 0 if not, but now the value kind of piles up.
+The problem now was I faced some bug that the value got wasn't as expected: we expected value 1 sent by server if chain is cut, and 0 if not, but now the value kind of piles up somehow.
 Also, I am thinking of passing value's value to a global variable to be used in the main loop, so that we can use that variable as an indicator of whether the chain is cut in client.
 
 __________________________________________________________________________________________________________________________________________________________________________________________________
 **4/4/2024 Bluetooth communication client**
 
+I realized the value in characteristic sent by the client in main loop is value++, which is improper, so I changed it to stay in 1 when chain.cut is detected, and 0 otherwise. The client main loop can now utilize the value sent from the server and stored in variable name 'main_loop_value'.
+
+Nicki has finished the code of the buzzer and the camera. I will work to integrate our code together now.
+
+__________________________________________________________________________________________________________________________________________________________________________________________________
+**4/4/2024 Bluetooth communication client**
 
 
