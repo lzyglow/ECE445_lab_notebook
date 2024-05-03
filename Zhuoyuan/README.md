@@ -58,7 +58,7 @@ Nicki changed her code to latest version of esp32 board, but the esp32-CAM are s
 
 I am thinking of how to disconnect the client from the server after client received signal indicating the wire is cut.
 I searched online and found a way to deinitialzed the bluetooth for the client.
-
+`
 void loop() {
 
   //  Now we connect to it.  Once we are 
@@ -96,8 +96,6 @@ void loop() {
     //BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
     sendPhoto = false;
   }
-//
-
 
   Serial.println(sendPhoto);
   if (sendPhoto) {
@@ -122,4 +120,4 @@ void loop() {
   }
   delay(1000); // Delay a second between loops.
 } // End of loop
-
+`
