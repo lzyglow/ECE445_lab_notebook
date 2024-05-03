@@ -30,7 +30,10 @@ I finished the coding of the client, or the esp32-CAM. I mainly adjust its callb
 
 ![callback](callback.png)
 
-The value got was originally shown as a char, and I transfer it into an int, easier to verify.
+The value got was originally shown as a char, and I transfer it into an int, easier to verify. The formula involved is simple:
+uint32_t value = (pData[3] << 24) | (pData[2] << 16) | (pData[1] << 8) | (pData[0]);
+it shifts the correpsonding bit of the data in char and "or" them together to form a int32.
+
 
 The problem now was I faced some bug that the value got wasn't as expected: we expected value 1 sent by server if chain is cut, and 0 if not, but now the value kind of piles up somehow.
 Also, I am thinking of passing value's value to a global variable to be used in the main loop, so that we can use that variable as an indicator of whether the chain is cut in client.
