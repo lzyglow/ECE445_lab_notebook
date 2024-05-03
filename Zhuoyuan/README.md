@@ -239,7 +239,7 @@ Nicki solved the third bug by adjusting parameters.
 
 We tried to add a functionality that the user are capable of stopping the alarm by typing "/reboot" in the chat bot of telegram and test it. Sometimes it functions well, sometimes it doesn't. We treid our best but couldn't figure out what's the reason for this inconsistency; thus, we decided to manually reset the esp32s3 by the button instead.
 __________________________________________________________________________________________________________________________________________________________________________________________________
-**4/20/2024 battery test and preparing for demo presentation**
+**4/20/2024 battery test, alarm decibel test, voltage test and preparing for demo presentation**
 
 The code is working, the pcb is done and functioning after Jonathan and Nicki did some adjustment. Nicki worked on a button that shows battery life, and I did a battery test while preparing ffor demo presentation.
 
@@ -247,3 +247,12 @@ Jonathan had done a battery test with our esp32S3, which requires 3.3V operation
 I just placed a new battery into the camera module, record its battery voltage supply every hour, and after 3 hours, I recorded the voltage of the battery for each hour to make a plot, and calculated the average voltage drop of the battery for esp32-CAM is 1.57, which is much larger than we expected.
 
 ![voltage that battery supply over time](voltage.png)
+
+In order to make sure all our subsystem satisfy our requirement, Nicki and I also did a alarm test to test the loudness of the alarm using an online application. The result is 91dB 5 feet away from the alarm, so it's much larger than we thought. We also did multiple voltage tests on our whole design:
+
+voltage supply from esp32s3 to the wire we are detecting (3.3V):
+![voltage](voltage_supply_to_wire.jpg)
+voltage supplied to esp32S3 after regulator (3.3V):
+![voltage](voltage_supply_to_esp32s3.jpg)
+voltage supplied to esp32-CAM after regulator (5V):
+![voltage](voltage_supply_to_esp32cam.jpg)
