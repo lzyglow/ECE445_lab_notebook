@@ -251,8 +251,8 @@ I just placed a new battery into the camera module, record its battery voltage s
 In order to make sure all our subsystem satisfy our requirement, Nicki and I also did a alarm test to test the loudness of the alarm using an online application. The result is 91dB 5 feet away from the alarm, so it's much larger than we thought. We also did multiple voltage tests on our whole design:
 
 voltage supply from esp32s3 to the wire we are detecting (3.3V):
-![voltage](voltage_supply_to_wire.jpg)
+![voltage_supply_to_wire](voltage_supply_to_wire.jpg)
 voltage supplied to esp32S3 after regulator (3.3V):
-![voltage](voltage_supply_to_esp32s3.jpg)
+![voltage_supply_to_esp32s3](voltage_supply_to_esp32s3.jpg.png)
 voltage supplied to esp32-CAM after regulator (5V):
-![voltage](voltage_supply_to_esp32cam.jpg)
+![voltage_supply_to_esp32cam](voltage_supply_to_esp32cam.jpg.png.jpg)
