@@ -52,7 +52,7 @@ Nicki has done the buzzer's code for the alarm subsystem in our design, so I int
 I also tried to integrate the code of BLE client with the WIFI camera code Nicki wrote. Althought the pictures are taken, since we could see led flashlight on the camera module, there are some bugs that the connection to the user phone always shows unsuccessful, meaning the pictures are taken but not able to be sent to user phone. Nicki's code alone works fine in terms of sending pictures to user phone. We believe it might be a problem with her WIFI library's version, since she used 1.014 version of esp32 board from her tutorial and ,in the comment below, someone said the code in tutorial weren't working for latest esp32 board version. She is considering changing her tutorial to a later version of esp 32 board.
 
 __________________________________________________________________________________________________________________________________________________________________________________________________
-**4/10/2024 server intrgrated code**
+**4/10/2024 client intrgrated code**
 
 Nicki changed her code to latest version of esp32 board, but the esp32-CAM are still not capable of sending the pictures. We realized after researches that the esp32-CAM only has 1 antenna, meaning if it's receiving bluetooth signal, it cannot send signal to user phone via WIFI.
 
@@ -121,3 +121,128 @@ void loop() {
   delay(1000); // Delay a second between loops.
 } // End of loop
 ```
+If connected, the code will use if statement to detect whether main_loop_value, the value sent by the server, is 1, indicating the wire is cut. If it's 1, then the code:
+```
+if(main_loop_value == 1){
+      sendPhoto = main_loop_value;
+      BLEDevice::deinit();
+      main_loop_value = 0;
+    }
+```
+The line BLEDevice::deinit(); will deinitilze the BLE for client, causing it to disconnect from the server. Than we will pass this main_loop_value to sendPhoto, and reset main_loop_value to 0 for repeated test after resetting the client. The device can now trigger the alarm successfully, and send photos to user phones, but the pictures sent are somewhat purple, so Nicki is going to adjust parameters of the camera to fix this problem.
+
+__________________________________________________________________________________________________________________________________________________________________________________________________
+**4/17/2024 debugging overall intrgrated code using pcb and tried to add user stop**
+
+During debugging of our code in the week, we fixed three bugs: 
+1. The camera will take two photos even if we only ask it to take one.
+2. After resetting the client for repeated test, the server will trigger the alarm and send value = 1 to client, indicating the wire is cut even if it's not.
+3. The picture has a fine resolution and isn't that purple as before.
+
+For the first bug, I originally thought maybe it's the line BLEDevice::deinit() in the original code that wasn't working properly, causing the connected variable which triggers the if statement of all bluetooth and camera module to be 1 even if it's no longer connected, causing the camera to take photos twice. I changed the BLEDevice::deinit() with a more comprehensive ways of disconnecting Bluetooth, this bug still happens since connected never return to 0 even if the disconnct program runs well. So, I just manually force the connect to zero after disbling the bluetooth connection, solving this problem.
+```
+if (connected) {
+    String newValue = "Time since boot: " + String(millis()/1000);
+    Serial.println("Setting new characteristic value to \"" + newValue + "\"");
+    
+    // Set the characteristic's value to be the array of bytes that is actually a string.
+    pRemoteCharacteristic->writeValue(newValue.c_str(), newValue.length());
+    //std::string value = pRemoteCharacteristic->readValue();
+    //uint32_t received_value = (value[3] << 24) | (value[2] << 16) | (value[1] << 8) | (value[0]);
+    Serial.print("The main_loop_value was: ");
+    Serial.println(main_loop_value);
+    
+    if(main_loop_value == 1){
+      sendPhoto = main_loop_value;
+      esp_bluedroid_disable();
+      esp_bluedroid_deinit();
+      esp_bt_controller_disable();
+      esp_bt_controller_deinit();
+      connected = 0;
+      main_loop_value = 0;
+    }
+    
+  }else if(doScan){
+    //BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+    sendPhoto = false;
+  }
+
+  Serial.println(sendPhoto);
+  if (sendPhoto) {
+    Serial.println("Preparing photo");
+    sendPhotoTelegram(); 
+    delay(2000);
+    sendPhotoTelegram();
+    sendPhoto = false; 
+  }
+```
+I adjusted the code in if(main_loop_value == 1) statement.
+
+
+For the 2nd bug, we found out that once the server disconnect from the client due to the client restart, we didn’t manually set the characteristic value to 0, the chain1.cut, which is a boolean value that indicate if the chain is detected to be cut, to false, and the digitalWrite(buzzer1.PIN, LOW), which gives a LOW output to the alarm. By failing to reset these parameters, the chain 1.cut is still 1, causing the server to mistakenly believe the chain is cut, and the HIGH output in digitalWrite causes the alarm to trigger. This problem is solved after changing the code for disconnection.
+Nicki and I debugged the code together. We changed the server's code to form the lastest server code:
+```
+void loop() {
+    if (deviceConnected) {
+      //Serial.printf("connected");
+      if (chain1.cut) {
+        delay(1000);
+        //Serial.printf("Chain 1 has been cut.");
+        digitalWrite(buzzer1.PIN, HIGH);
+        value = 1;
+        pCharacteristic->setValue(value);
+        pCharacteristic->notify();
+        delay(10000);
+        chain1.cut = false;
+      }else {
+        value = 0;
+        digitalWrite(buzzer1.PIN, LOW);
+        pCharacteristic->setValue(value);
+        pCharacteristic->notify();
+        delay(1000);
+      }
+    }
+    // disconnecting
+    if (!deviceConnected && oldDeviceConnected) {
+        value = 0;
+        chain1.cut = false;
+        digitalWrite(buzzer1.PIN, LOW);
+        delay(500); // give the bluetooth stack the chance to get things ready
+        pServer->startAdvertising(); // restart advertising
+        Serial.println("start advertising");
+        oldDeviceConnected = deviceConnected;
+    }
+    // connecting
+    if (deviceConnected && !oldDeviceConnected) {
+        value = 0;
+        chain1.cut = false;
+        digitalWrite(buzzer1.PIN, LOW);
+        // do stuff here on connecting
+        oldDeviceConnected = deviceConnected;
+    }
+}
+```
+We mainly adjust the circumstances when the client disconnect from the server, or this block:
+```
+ if (!deviceConnected && oldDeviceConnected) {
+        value = 0;
+        chain1.cut = false;
+        digitalWrite(buzzer1.PIN, LOW);
+        delay(500); // give the bluetooth stack the chance to get things ready
+        pServer->startAdvertising(); // restart advertising
+        Serial.println("start advertising");
+        oldDeviceConnected = deviceConnected;
+    }
+```
+To reset the parameters like value and chain1.cut, and output LOW to the buzzer Pin.
+Nicki solved the third bug by adjusting parameters.
+
+We tried to add a functionality that the user are capable of stopping the alarm by typing "/reboot" in the chat bot of telegram and test it. Sometimes it functions well, sometimes it doesn't. We treid our best but couldn't figure out what's the reason for this inconsistency; thus, we decided to manually reset the esp32s3 by the button instead.
+__________________________________________________________________________________________________________________________________________________________________________________________________
+**4/20/2024 battery test and preparing for demo presentation**
+
+The code is working, the pcb is done and functioning after Jonathan and Nicki did some adjustment. Nicki worked on a button that shows battery life, and I did a battery test while preparing ffor demo presentation.
+
+Jonathan had done a battery test with our esp32S3, which requires 3.3V operational voltage, but he didn't do the battery test for our camera module.
+I just placed a new battery into the camera module, record its battery voltage supply every hour, and after 3 hours, I recorded the voltage of the battery for each hour to make a plot, and calculated the average voltage drop of the battery for esp32-CAM is 1.57, which is much larger than we expected.
+
